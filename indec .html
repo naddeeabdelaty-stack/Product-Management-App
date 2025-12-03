@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Management App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 10px;
+            width: 250px;
+        }
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        table {
+            width: 80%;
+            margin: auto;
+            background: white;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .edit-btn { background: #28a745; }
+        .delete-btn { background: #dc3545; }
+    </style>
+</head>
+<body>
+
+<h1>Product Management App</h1>
+
+<form id="productForm">
+    <input type="text" id="productName" placeholder="Enter product name" required />
+    <button type="submit">Add Product</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody id="productTableBody"></tbody>
+</table>
+
+<script>
+    const { createClient } = supabase;
+    const supabaseUrl = 'https://vekmmekzoljweyxkdnch.supabase.co'; // Replace
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZla21tZWt6b2xqd2V5eGtkbmNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3OTA3MzUsImV4cCI6MjA4MDM2NjczNX0.bsl2h0rGSpBk15XJku7eQjRrrXaI32mIimcmRxvFgyM'; // Replace
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    async function fetchProducts() {
+        const { data } = await supabaseClient.from('products').select('*');
+        const tableBody = document.getElementById('productTableBody');
+        tableBody.innerHTML = '';
+
+        data.forEach(product => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${product.name}</td>
+                <td><button class="edit-btn" onclick="editProduct(${product.id}, '${product.name}')">Edit</button></td>
+                <td><button class="delete-btn" onclick="deleteProduct(${product.id})">Delete</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('productName').value;
+
+        if (!name.trim()) return;
+
+        await supabaseClient.from('products').insert([{ name }]);
+        document.getElementById('productName').value = '';
+        fetchProducts();
+    });
+
+    async function editProduct(id, currentName) {
+        const newName = prompt('Edit product name:', currentName);
+        if (newName && newName.trim()) {
+            await supabaseClient.from('products').update({ name: newName }).eq('id', id);
+            fetchProducts();
+        }
+    }
+
+    async function deleteProduct(id) {
+        if (confirm('Are you sure you want to delete this product?')) {
+            await supabaseClient.from('products').delete().eq('id', id);
+            fetchProducts();
+        }
+    }
+
+    fetchProducts();
+</script>
+
+</body>
+</html>
